@@ -1,17 +1,33 @@
-
 """Git blame: who added this suppression, and when."""
 
+import os
 import subprocess
 from datetime import datetime, timezone
 
 
 def _run(args, cwd="."):
+    """Run a git command. Returns stdout on success, None on any failure.
+
+    Failures include: git not installed, not a repo, invalid cwd path,
+    timeout, non-zero exit. All of these should be non-fatal.
+    """
+    # If cwd is given and doesn't exist, fail fast
+    if cwd and cwd != ".":
+        try:
+            if not os.path.isdir(cwd):
+                return None
+        except (OSError, TypeError):
+            return None
+
     try:
-        r = subprocess.run(args, capture_output=True, text=True, cwd=cwd, timeout=30)
+        r = subprocess.run(
+            args, capture_output=True, text=True, cwd=cwd, timeout=30,
+        )
         if r.returncode != 0:
             return None
         return r.stdout
-    except (subprocess.TimeoutExpired, FileNotFoundError):
+    except (subprocess.TimeoutExpired, FileNotFoundError, NotADirectoryError,
+            PermissionError, OSError):
         return None
 
 

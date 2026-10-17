@@ -25,9 +25,13 @@ def classify_suppression(supp, cwd="."):
     """Enrich a Suppression with blame, issues, age, and verdict."""
     if is_repo(cwd):
         sha, author, date_iso = blame_line(supp.file, supp.line, cwd=cwd)
-        supp.added_by = author or ""
-        supp.added_date = date_iso or ""
-        supp.age_days = age_days(date_iso)
+        if author:
+            supp.added_by = author
+        if date_iso:
+            supp.added_date = date_iso
+            supp.age_days = age_days(date_iso)
+        # If blame returns nothing (file not in repo, shallow clone,
+        # uncommitted file), preserve any pre-existing age_days.
 
     supp.issue_refs = extract_issue_refs(supp.reason)
 
